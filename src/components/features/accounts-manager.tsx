@@ -14,7 +14,6 @@ import {
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useAdmin } from "@/components/auth/admin-context";
-import { PageHeader } from "@/components/layout/page-header";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -160,101 +159,96 @@ export function AccountsManager() {
 
   return (
     <div className="space-y-7">
-      <PageHeader
-        eyebrow="계정 및 권한"
-        title="관리자 계정"
-        description="관리자 계정을 만들고 이용 상태를 관리합니다. 새 계정은 처음 로그인한 뒤 비밀번호를 변경해야 합니다."
-        actions={
-          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus />
-                계정 생성
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>관리자 계정 생성</DialogTitle>
-                <DialogDescription>
-                  이메일과 비밀번호로 로그인하는 계정을 만듭니다. 초기
-                  비밀번호는 대상자에게 직접 전달해 주세요.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="account-email">이메일(아이디)</Label>
-                  <Input
-                    id="account-email"
-                    type="email"
-                    value={values.email}
-                    onChange={(event) =>
-                      setValues({ ...values, email: event.target.value })
-                    }
-                    placeholder="name@example.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="account-name">이름</Label>
-                  <Input
-                    id="account-name"
-                    value={values.name}
-                    onChange={(event) =>
-                      setValues({ ...values, name: event.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>조직</Label>
-                  <Select
-                    value={values.orgType}
-                    onValueChange={(value: OrgType) =>
-                      setValues({ ...values, orgType: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="SKV1">SKV1</SelectItem>
-                      <SelectItem value="MADEINLEMON">MADEINLEMON</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="account-password">초기 비밀번호</Label>
-                  <Input
-                    id="account-password"
-                    type="password"
-                    value={values.password}
-                    onChange={(event) =>
-                      setValues({ ...values, password: event.target.value })
-                    }
-                    placeholder="8자 이상"
-                  />
-                  <p className="text-xs leading-5 text-zinc-500">
-                    대상자는 이 비밀번호로 처음 로그인한 뒤 새 비밀번호로
-                    변경해야 합니다.
-                  </p>
-                </div>
+      <div className="flex justify-end">
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus />
+              계정 생성
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>관리자 계정 생성</DialogTitle>
+              <DialogDescription>
+                이메일과 비밀번호로 로그인하는 계정을 만듭니다. 초기 비밀번호는
+                대상자에게 직접 전달해 주세요.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="account-email">이메일(아이디)</Label>
+                <Input
+                  id="account-email"
+                  type="email"
+                  value={values.email}
+                  onChange={(event) =>
+                    setValues({ ...values, email: event.target.value })
+                  }
+                  placeholder="name@example.com"
+                />
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setCreateOpen(false)}>
-                  취소
-                </Button>
-                <Button
-                  disabled={!valid || createMutation.isPending}
-                  onClick={() => createMutation.mutate()}
+              <div className="space-y-2">
+                <Label htmlFor="account-name">이름</Label>
+                <Input
+                  id="account-name"
+                  value={values.name}
+                  onChange={(event) =>
+                    setValues({ ...values, name: event.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>조직</Label>
+                <Select
+                  value={values.orgType}
+                  onValueChange={(value: OrgType) =>
+                    setValues({ ...values, orgType: value })
+                  }
                 >
-                  {createMutation.isPending && (
-                    <LoaderCircle className="animate-spin" />
-                  )}
-                  계정 만들기
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        }
-      />
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="SKV1">SKV1</SelectItem>
+                    <SelectItem value="MADEINLEMON">MADEINLEMON</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="account-password">초기 비밀번호</Label>
+                <Input
+                  id="account-password"
+                  type="password"
+                  value={values.password}
+                  onChange={(event) =>
+                    setValues({ ...values, password: event.target.value })
+                  }
+                  placeholder="8자 이상"
+                />
+                <p className="text-xs leading-5 text-zinc-500">
+                  대상자는 이 비밀번호로 처음 로그인한 뒤 새 비밀번호로 변경해야
+                  합니다.
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCreateOpen(false)}>
+                취소
+              </Button>
+              <Button
+                disabled={!valid || createMutation.isPending}
+                onClick={() => createMutation.mutate()}
+              >
+                {createMutation.isPending && (
+                  <LoaderCircle className="animate-spin" />
+                )}
+                계정 만들기
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
       <Card className="overflow-hidden">
         <div className="flex flex-col gap-4 border-b p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <SearchField
@@ -413,7 +407,7 @@ export function AccountsManager() {
             <AlertDialogAction
               className={
                 activeTarget?.active
-                  ? "bg-red-600 text-white hover:bg-red-700"
+                  ? "bg-destructive text-white hover:bg-destructive-hover"
                   : undefined
               }
               disabled={activeMutation.isPending || !activeTarget}
@@ -457,7 +451,7 @@ export function AccountsManager() {
               취소
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 text-white hover:bg-red-700"
+              className="bg-destructive text-white hover:bg-destructive-hover"
               disabled={resetMutation.isPending || !resetTarget}
               onClick={(event) => {
                 event.preventDefault();
@@ -503,7 +497,9 @@ export function AccountsManager() {
                     toast.success("임시 비밀번호를 복사했습니다.");
                   }
                 } catch {
-                  toast.error("복사하지 못했습니다. 비밀번호를 직접 선택해 주세요.");
+                  toast.error(
+                    "복사하지 못했습니다. 비밀번호를 직접 선택해 주세요.",
+                  );
                 }
               }}
               aria-label="임시 비밀번호 복사"
@@ -511,7 +507,7 @@ export function AccountsManager() {
               <Copy />
             </Button>
           </div>
-          <div className="rounded-lg bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900">
+          <div className="rounded-lg bg-warning-soft px-4 py-3 text-xs leading-5 text-warning-foreground">
             대상자는 임시 비밀번호로 로그인한 뒤 새 비밀번호로 변경해야 다른
             기능을 사용할 수 있습니다.
           </div>

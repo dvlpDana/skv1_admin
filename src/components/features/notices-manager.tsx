@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { PageHeader } from "@/components/layout/page-header";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -138,17 +137,12 @@ export function NoticesManager() {
 
   return (
     <div className="space-y-7">
-      <PageHeader
-        eyebrow="콘텐츠 관리"
-        title="공지사항"
-        description="고객에게 공개되는 공지를 작성하고 HTML 본문을 미리 확인합니다."
-        actions={
-          <Button onClick={openCreate}>
-            <Plus />
-            공지 등록
-          </Button>
-        }
-      />
+      <div className="flex justify-end">
+        <Button onClick={openCreate}>
+          <Plus />
+          공지 등록
+        </Button>
+      </div>
       <Card className="overflow-hidden">
         <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <SearchField
@@ -317,7 +311,7 @@ export function NoticesManager() {
               취소
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive hover:bg-destructive-hover"
               disabled={deleteMutation.isPending || !deleteTarget}
               onClick={(event) => {
                 event.preventDefault();

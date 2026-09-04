@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { PageHeader } from "@/components/layout/page-header";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,7 +58,9 @@ export function InquiryCategoriesManager() {
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [activeTarget, setActiveTarget] = useState<InquiryCategory | null>(null);
+  const [activeTarget, setActiveTarget] = useState<InquiryCategory | null>(
+    null,
+  );
   const [name, setName] = useState("");
   const [displayOrder, setDisplayOrder] = useState(1);
   const query = useQuery({
@@ -81,9 +82,7 @@ export function InquiryCategoriesManager() {
           }),
     onSuccess: async () => {
       toast.success(
-        editingId
-          ? "문의 항목을 수정했습니다."
-          : "문의 항목을 추가했습니다.",
+        editingId ? "문의 항목을 수정했습니다." : "문의 항목을 추가했습니다.",
       );
       setFormOpen(false);
       await invalidate();
@@ -119,17 +118,12 @@ export function InquiryCategoriesManager() {
 
   return (
     <div className="space-y-7">
-      <PageHeader
-        eyebrow="고객 관리"
-        title="문의 항목 관리"
-        description="고객이 문의를 등록할 때 선택하는 항목과 표시 순서를 관리합니다. 항목을 숨겨도 기존 문의는 그대로 유지됩니다."
-        actions={
-          <Button onClick={openCreate}>
-            <Plus />
-            문의 항목 추가
-          </Button>
-        }
-      />
+      <div className="flex justify-end">
+        <Button onClick={openCreate}>
+          <Plus />
+          문의 항목 추가
+        </Button>
+      </div>
       <Card className="overflow-hidden">
         {query.isLoading ? (
           <div className="space-y-2 p-6">
@@ -170,7 +164,7 @@ export function InquiryCategoriesManager() {
                       {item.name}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={item.active ? "success" : "secondary"}>
+                      <Badge variant={item.active ? "success" : "neutral"}>
                         {item.active ? "활성" : "비활성"}
                       </Badge>
                     </TableCell>

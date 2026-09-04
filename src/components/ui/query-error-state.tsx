@@ -15,7 +15,7 @@ export function QueryErrorState({
       className="flex min-h-56 flex-col items-center justify-center px-6 py-10 text-center"
       role="alert"
     >
-      <span className="flex size-11 items-center justify-center rounded-full bg-red-50 text-red-600">
+      <span className="flex size-11 items-center justify-center rounded-full bg-destructive-soft text-destructive-foreground">
         <AlertTriangle className="size-5" />
       </span>
       <h2 className="mt-4 text-base font-semibold text-zinc-900">{title}</h2>

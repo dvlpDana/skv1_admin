@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { PageHeader } from "@/components/layout/page-header";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,10 +42,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FilterToolbar } from "@/components/ui/filter-toolbar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { QueryErrorState } from "@/components/ui/query-error-state";
 import { SearchField } from "@/components/ui/search-field";
+import { SegmentedFilter } from "@/components/ui/segmented-filter";
 import {
   Select,
   SelectContent,
@@ -57,7 +58,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { adminApi } from "@/lib/api/client";
-import { cn } from "@/lib/utils";
 import {
   FAQ_CATEGORIES,
   FAQ_CATEGORY_LABELS,
@@ -190,68 +190,44 @@ export function FaqsManager() {
 
   return (
     <div className="space-y-7">
-      <PageHeader
-        eyebrow="콘텐츠 관리"
-        title="FAQ 관리"
-        description="고객에게 즉시 공개되는 FAQ를 작성하고 카테고리별 노출 순서를 관리합니다."
-        actions={
-          <Button onClick={openCreate}>
-            <Plus />
-            FAQ 등록
-          </Button>
-        }
-      />
+      <div className="flex justify-end">
+        <Button onClick={openCreate}>
+          <Plus />
+          FAQ 등록
+        </Button>
+      </div>
       <Card className="overflow-hidden">
-        <div className="border-b p-4 sm:px-6">
-          <div
-            className="flex gap-2 overflow-x-auto pb-1"
-            aria-label="FAQ 카테고리 필터"
-          >
-            {FAQ_CATEGORIES.map((item) => {
-              const selected = category === item;
-              const count = (query.data ?? []).filter(
-                (faq) => faq.category === item,
-              ).length;
-
-              return (
-                <Button
-                  key={item}
-                  variant="outline"
-                  size="sm"
-                  aria-pressed={selected}
-                  className={cn(
-                    "h-10 gap-3 rounded-lg border-neutral-200 px-3.5 text-sm shadow-none transition-all duration-200 focus-visible:ring-neutral-400",
-                    selected
-                      ? "border-neutral-900 bg-neutral-900 text-white shadow-[0_6px_16px_rgba(23,23,23,0.14)] hover:border-neutral-800 hover:bg-neutral-800"
-                      : "bg-white text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-950",
-                  )}
-                  onClick={() => {
-                    setCategory(item);
-                    setDraftOrder(null);
-                  }}
-                >
-                  <span>{FAQ_CATEGORY_LABELS[item]}</span>
-                  <span
-                    className={cn(
-                      "min-w-5 border-l pl-3 text-center text-xs font-semibold tabular-nums",
-                      selected
-                        ? "border-white/20 text-neutral-200"
-                        : "border-neutral-200 text-neutral-500",
-                    )}
-                  >
-                    {count}
-                  </span>
-                </Button>
-              );
-            })}
-          </div>
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <FilterToolbar
+          search={
             <SearchField
               value={search}
               onChange={setSearch}
               placeholder="질문 또는 답변 검색"
             />
-            {draftOrder && (
+          }
+          filter={
+            <SegmentedFilter
+              value={category}
+              options={FAQ_CATEGORIES.map((item) => ({
+                value: item,
+                label: FAQ_CATEGORY_LABELS[item],
+                count: (query.data ?? []).filter((faq) => faq.category === item)
+                  .length,
+              }))}
+              onValueChange={(nextCategory) => {
+                setCategory(nextCategory);
+                setDraftOrder(null);
+              }}
+              ariaLabel="FAQ 카테고리 필터"
+            />
+          }
+          summary={
+            search
+              ? `${orderedItems.length}개 표시`
+              : `총 ${categoryItems.length}개`
+          }
+          actions={
+            draftOrder ? (
               <Button
                 size="sm"
                 onClick={() => reorderMutation.mutate()}
@@ -260,9 +236,9 @@ export function FaqsManager() {
                 <Save />
                 순서 저장
               </Button>
-            )}
-          </div>
-        </div>
+            ) : undefined
+          }
+        />
         {query.isLoading ? (
           <div className="space-y-3 p-6">
             {Array.from({ length: 4 }).map((_, index) => (
@@ -432,7 +408,7 @@ export function FaqsManager() {
                 }
               />
               {duplicateOrder && (
-                <p className="text-xs leading-5 text-red-600">
+                <p className="text-xs leading-5 text-destructive-foreground">
                   같은 카테고리에 이미 사용 중인 노출 순서입니다. 다른 번호를
                   입력해 주세요.
                 </p>
@@ -492,7 +468,7 @@ export function FaqsManager() {
               취소
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive hover:bg-destructive-hover"
               disabled={deleteMutation.isPending || !deleteTarget}
               onClick={(event) => {
                 event.preventDefault();

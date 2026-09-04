@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { FileClock } from "lucide-react";
 import { useState } from "react";
-import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -68,11 +67,6 @@ export function AuditLogsView() {
   const logs = pageItems(logsQuery.data);
   return (
     <div className="space-y-7">
-      <PageHeader
-        eyebrow="계정 및 기록"
-        title="관리 작업 기록"
-        description="관리자가 변경한 내용과 처리 시간을 확인합니다. 새로운 작업 종류가 추가되면 기록에도 자동으로 표시됩니다."
-      />
       <Card className="overflow-hidden">
         <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:px-6">
           <Select
@@ -162,7 +156,7 @@ export function AuditLogsView() {
                   <TableCell>
                     <Badge
                       variant={
-                        log.action === "DELETE" ? "destructive" : "secondary"
+                        log.action === "DELETE" ? "destructive" : "neutral"
                       }
                     >
                       {actionLabels[log.action] ?? log.action}

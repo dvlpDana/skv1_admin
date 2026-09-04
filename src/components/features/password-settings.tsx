@@ -12,7 +12,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useAdmin } from "@/components/auth/admin-context";
-import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -71,11 +70,6 @@ export function PasswordSettings() {
   if (admin.authMethod === "SOCIAL")
     return (
       <div className="space-y-7">
-        <PageHeader
-          eyebrow="내 계정"
-          title="비밀번호 변경"
-          description="현재 계정의 로그인 방식을 확인합니다."
-        />
         <Card className="flex min-h-72 flex-col items-center justify-center p-8 text-center">
           <ShieldCheck className="size-10 text-zinc-400" />
           <h2 className="mt-4 font-semibold">소셜 로그인 계정입니다</h2>
@@ -87,17 +81,8 @@ export function PasswordSettings() {
     );
   return (
     <div className="mx-auto max-w-3xl space-y-7">
-      <PageHeader
-        eyebrow="내 계정"
-        title={required ? "새 비밀번호가 필요합니다" : "비밀번호 변경"}
-        description={
-          required
-            ? "다른 관리자 기능을 사용하기 전에 초기 비밀번호를 변경해주세요."
-            : "관리자 계정을 안전하게 보호하기 위해 비밀번호를 주기적으로 변경해주세요."
-        }
-      />
       {required && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+        <div className="rounded-xl border border-warning-border bg-warning-soft p-4 text-sm leading-6 text-warning-foreground">
           <strong>최초 로그인 보안 절차</strong>
           <br />
           비밀번호 변경을 완료하면 모든 관리자 기능을 사용할 수 있습니다.
@@ -114,7 +99,7 @@ export function PasswordSettings() {
               {...register("currentPassword")}
             />
             {errors.currentPassword && (
-              <p className="text-xs text-red-600">
+              <p className="text-xs text-destructive-foreground">
                 {errors.currentPassword.message}
               </p>
             )}
@@ -128,7 +113,7 @@ export function PasswordSettings() {
               {...register("newPassword")}
             />
             {errors.newPassword && (
-              <p className="text-xs text-red-600">
+              <p className="text-xs text-destructive-foreground">
                 {errors.newPassword.message}
               </p>
             )}
@@ -142,7 +127,7 @@ export function PasswordSettings() {
               {...register("confirmPassword")}
             />
             {errors.confirmPassword && (
-              <p className="text-xs text-red-600">
+              <p className="text-xs text-destructive-foreground">
                 {errors.confirmPassword.message}
               </p>
             )}
@@ -150,11 +135,11 @@ export function PasswordSettings() {
           <div className="rounded-lg bg-zinc-50 p-4">
             <ul className="space-y-2 text-xs text-zinc-500">
               <li className="flex items-center gap-2">
-                <CheckCircle2 className="size-3.5 text-blue-600" />
+                <CheckCircle2 className="size-3.5 text-success" />
                 8자 이상의 비밀번호를 사용하세요.
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle2 className="size-3.5 text-blue-600" />
+                <CheckCircle2 className="size-3.5 text-success" />
                 이전 비밀번호와 다른 값을 권장합니다.
               </li>
             </ul>

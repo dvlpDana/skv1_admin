@@ -26,6 +26,7 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -33,11 +34,25 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-hover: var(--destructive-hover);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-border: var(--destructive-border);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-border: var(--success-border);
   --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-border: var(--warning-border);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-border: var(--info-border);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -54,18 +69,33 @@
   --popover-foreground: #18181b;
   --primary: #b80f0a;
   --primary-foreground: #ffffff;
+  --primary-hover: #9f0d09;
   --secondary: #ff7a00;
   --secondary-foreground: #ffffff;
   --muted: #f4f4f5;
   --muted-foreground: #71717a;
-  --accent: #fff1f0;
-  --accent-foreground: #850b08;
+  --accent: #f4f4f5;
+  --accent-foreground: #27272a;
   --destructive: #dc2626;
+  --destructive-hover: #b91c1c;
+  --destructive-soft: #fef2f2;
+  --destructive-foreground: #b91c1c;
+  --destructive-border: #fecaca;
   --border: #e4e4e7;
   --input: #d4d4d8;
-  --ring: #b80f0a;
-  --success: #1652cc;
-  --warning: #ff9900;
+  --ring: #2563eb;
+  --success: #16a34a;
+  --success-soft: #f0fdf4;
+  --success-foreground: #166534;
+  --success-border: #bbf7d0;
+  --warning: #d97706;
+  --warning-soft: #fffbeb;
+  --warning-foreground: #92400e;
+  --warning-border: #fde68a;
+  --info: #2563eb;
+  --info-soft: #eff6ff;
+  --info-foreground: #1d4ed8;
+  --info-border: #bfdbfe;
 }
 
 * {
@@ -98,8 +128,8 @@ button:not(:disabled),
 }
 
 ::selection {
-  background: #ffc5c1;
-  color: #460605;
+  background: var(--info-soft);
+  color: var(--info-foreground);
 }
 
 .admin-grid {

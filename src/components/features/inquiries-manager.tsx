@@ -8,13 +8,12 @@ import {
   Mail,
   MessageSquareText,
   Paperclip,
-  Send,
   UserRound,
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { PageHeader } from "@/components/layout/page-header";
+import { InquiryStatusBadge } from "@/components/features/inquiry-status-badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +24,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -37,18 +35,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FilterToolbar } from "@/components/ui/filter-toolbar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 import { QueryErrorState } from "@/components/ui/query-error-state";
 import { SearchField } from "@/components/ui/search-field";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SegmentedFilter } from "@/components/ui/segmented-filter";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -71,11 +64,19 @@ import type {
 
 function uploadItems(
   data:
-    | UploadUrlItem[]
-    | { files?: UploadUrlItem[]; uploadUrls?: UploadUrlItem[] },
+    UploadUrlItem[] | { files?: UploadUrlItem[]; uploadUrls?: UploadUrlItem[] },
 ) {
   return Array.isArray(data) ? data : (data.files ?? data.uploadUrls ?? []);
 }
+
+const statusFilters: Array<{
+  value: InquiryStatus | "ALL";
+  label: string;
+}> = [
+  { value: "ALL", label: "전체" },
+  { value: "PENDING", label: "답변 대기" },
+  { value: "ANSWERED", label: "답변 완료" },
+];
 
 export function InquiriesManager() {
   const queryClient = useQueryClient();
@@ -197,108 +198,36 @@ export function InquiriesManager() {
     answerMutation.mutate();
   }
 
+  function changeStatus(nextStatus: InquiryStatus | "ALL") {
+    setStatus(nextStatus);
+    setPage(0);
+  }
+
   return (
     <div className="space-y-7">
-      <PageHeader
-        eyebrow="고객 관리"
-        title="1:1 문의"
-        description="고객 문의를 확인하고 답변과 이미지를 등록합니다. 답변을 수정하면 기존 답변이 교체됩니다."
-      />
-      <section className="grid gap-4 sm:grid-cols-2">
-        <Card
-          className={`p-5 transition ${status === "PENDING" ? "border-primary/25 bg-primary text-white" : ""}`}
-          role="button"
-          tabIndex={0}
-          onClick={() => {
-            setStatus("PENDING");
-            setPage(0);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              setStatus("PENDING");
-              setPage(0);
-            }
-          }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p
-                className={`text-sm ${status === "PENDING" ? "text-white/70" : "text-zinc-500"}`}
-              >
-                답변 대기
-              </p>
-              <strong className="mt-2 block text-2xl">
-                {status === "PENDING"
-                  ? (listQuery.data?.totalElements ?? 0)
-                  : "확인"}
-              </strong>
-            </div>
-            <MessageSquareText className="size-6" />
-          </div>
-        </Card>
-        <Card
-          className={`p-5 transition ${status === "ANSWERED" ? "border-primary/25 bg-zinc-900 text-white" : ""}`}
-          role="button"
-          tabIndex={0}
-          onClick={() => {
-            setStatus("ANSWERED");
-            setPage(0);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              setStatus("ANSWERED");
-              setPage(0);
-            }
-          }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p
-                className={`text-sm ${status === "ANSWERED" ? "text-white/70" : "text-zinc-500"}`}
-              >
-                답변 완료
-              </p>
-              <strong className="mt-2 block text-2xl">
-                {status === "ANSWERED"
-                  ? (listQuery.data?.totalElements ?? 0)
-                  : "확인"}
-              </strong>
-            </div>
-            <Send className="size-6" />
-          </div>
-        </Card>
-      </section>
       <Card className="overflow-hidden">
-        <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <div className="flex w-full flex-col gap-2 sm:flex-row">
+        <FilterToolbar
+          search={
             <SearchField
               value={search}
               onChange={setSearch}
               placeholder="문의 제목 또는 문의 항목 검색"
             />
-            <Select
+          }
+          filter={
+            <SegmentedFilter
               value={status}
-              onValueChange={(value: InquiryStatus | "ALL") => {
-                setStatus(value);
-                setPage(0);
-              }}
-            >
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">전체 상태</SelectItem>
-                <SelectItem value="PENDING">답변 대기</SelectItem>
-                <SelectItem value="ANSWERED">답변 완료</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <p className="shrink-0 text-sm text-zinc-500">
-            총 {listQuery.data?.totalElements ?? inquiries.length}건
-          </p>
-        </div>
+              options={statusFilters}
+              onValueChange={changeStatus}
+              ariaLabel="문의 상태 필터"
+            />
+          }
+          summary={
+            search
+              ? `${inquiries.length}건 표시`
+              : `총 ${listQuery.data?.totalElements ?? inquiries.length}건`
+          }
+        />
         {listQuery.isLoading ? (
           <div className="space-y-2 p-6">
             {Array.from({ length: 6 }).map((_, index) => (
@@ -310,8 +239,12 @@ export function InquiriesManager() {
         ) : inquiries.length === 0 ? (
           <EmptyState
             icon={MessageSquareText}
-            title="문의가 없습니다"
-            description="현재 조건에 해당하는 고객 문의가 없습니다."
+            title={search ? "검색 결과가 없습니다" : "문의가 없습니다"}
+            description={
+              search
+                ? "검색어를 바꾸거나 검색 조건을 초기화해 주세요."
+                : "선택한 상태에 해당하는 고객 문의가 없습니다."
+            }
           />
         ) : (
           <Table>
@@ -342,13 +275,7 @@ export function InquiriesManager() {
                   }}
                 >
                   <TableCell>
-                    <Badge
-                      variant={
-                        item.status === "PENDING" ? "warning" : "success"
-                      }
-                    >
-                      {item.status === "PENDING" ? "답변 대기" : "답변 완료"}
-                    </Badge>
+                    <InquiryStatusBadge status={item.status} />
                   </TableCell>
                   <TableCell>{item.categoryName}</TableCell>
                   <TableCell className="max-w-[560px] truncate font-semibold text-zinc-900">
@@ -394,17 +321,7 @@ export function InquiriesManager() {
             <>
               <DialogHeader>
                 <div className="mb-2 flex items-center gap-2">
-                  <Badge
-                    variant={
-                      detailQuery.data.status === "PENDING"
-                        ? "warning"
-                        : "success"
-                    }
-                  >
-                    {detailQuery.data.status === "PENDING"
-                      ? "답변 대기"
-                      : "답변 완료"}
-                  </Badge>
+                  <InquiryStatusBadge status={detailQuery.data.status} />
                   <span className="text-xs text-zinc-400">
                     문의 #{detailQuery.data.id}
                   </span>
@@ -445,7 +362,7 @@ export function InquiriesManager() {
                             alt="고객 첨부 이미지"
                             fill
                             unoptimized
-                            className="object-cover transition duration-500 group-hover:scale-105"
+                            className="object-cover"
                           />
                         </a>
                       ))}
@@ -478,7 +395,7 @@ export function InquiriesManager() {
                             alt="답변 첨부 이미지"
                             fill
                             unoptimized
-                            className="object-cover transition duration-500 group-hover:scale-105"
+                            className="object-cover"
                           />
                         </a>
                       ))}
@@ -489,7 +406,7 @@ export function InquiriesManager() {
                       htmlFor="answer-images"
                       className="flex cursor-pointer items-center gap-2"
                     >
-                      <ImagePlus className="size-4 text-primary" />
+                      <ImagePlus className="size-4 text-zinc-500" />
                       답변 이미지 추가
                     </Label>
                     <Input
