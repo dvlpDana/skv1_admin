@@ -81,7 +81,7 @@ export function LoginForm() {
       {searchParams.get("reason") === "session-expired" && (
         <div
           role="alert"
-          className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+          className="rounded-lg border border-warning-border bg-warning-soft px-4 py-3 text-sm text-warning-foreground"
         >
           로그인 시간이 만료되었습니다. 다시 로그인해 주세요.
         </div>
@@ -97,7 +97,9 @@ export function LoginForm() {
           {...register("email")}
         />
         {errors.email && (
-          <p className="text-xs text-red-600">{errors.email.message}</p>
+          <p className="text-xs text-destructive-foreground">
+            {errors.email.message}
+          </p>
         )}
       </div>
       <div className="space-y-2">
@@ -116,7 +118,7 @@ export function LoginForm() {
           />
           <button
             type="button"
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-zinc-500 hover:text-zinc-900"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-zinc-500 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             onClick={() => setShowPassword((value) => !value)}
             aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
           >
@@ -128,7 +130,9 @@ export function LoginForm() {
           </button>
         </div>
         {errors.password && (
-          <p className="text-xs text-red-600">{errors.password.message}</p>
+          <p className="text-xs text-destructive-foreground">
+            {errors.password.message}
+          </p>
         )}
       </div>
       <Button
@@ -190,7 +194,7 @@ export function LoginForm() {
             <div className="space-y-3">
               {helpTopic === "account" ? (
                 <div className="flex gap-3 rounded-lg border bg-zinc-50 p-4">
-                  <CircleUserRound className="mt-0.5 size-5 shrink-0 text-primary" />
+                  <CircleUserRound className="mt-0.5 size-5 shrink-0 text-info" />
                   <div>
                     <h3 className="text-sm font-semibold text-zinc-900">
                       직접 회원가입하지 않아도 됩니다
@@ -205,7 +209,7 @@ export function LoginForm() {
               ) : (
                 <>
                   <div className="flex gap-3 rounded-lg border bg-zinc-50 p-4">
-                    <Mail className="mt-0.5 size-5 shrink-0 text-primary" />
+                    <Mail className="mt-0.5 size-5 shrink-0 text-info" />
                     <div>
                       <h3 className="text-sm font-semibold text-zinc-900">
                         아이디를 잊었어요
@@ -218,7 +222,7 @@ export function LoginForm() {
                     </div>
                   </div>
                   <div className="flex gap-3 rounded-lg border bg-zinc-50 p-4">
-                    <KeyRound className="mt-0.5 size-5 shrink-0 text-primary" />
+                    <KeyRound className="mt-0.5 size-5 shrink-0 text-info" />
                     <div>
                       <h3 className="text-sm font-semibold text-zinc-900">
                         비밀번호를 잊었어요
@@ -232,7 +236,7 @@ export function LoginForm() {
                   </div>
                 </>
               )}
-              <div className="rounded-lg bg-red-50 px-4 py-3 text-xs leading-5 text-red-800">
+              <div className="rounded-lg border border-info-border bg-info-soft px-4 py-3 text-xs leading-5 text-info-foreground">
                 계정 보안을 위해 이메일이나 임시 비밀번호는 화면에서 자동으로
                 안내하지 않습니다.
               </div>

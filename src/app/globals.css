@@ -128,17 +128,6 @@ button:not(:disabled),
   color: var(--info-foreground);
 }
 
-.admin-grid {
-  background-image:
-    linear-gradient(to right, rgb(24 24 27 / 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(24 24 27 / 0.035) 1px, transparent 1px);
-  background-size: 28px 28px;
-}
-
-.noise-overlay {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.08'/%3E%3C/svg%3E");
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
