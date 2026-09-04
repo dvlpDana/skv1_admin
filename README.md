@@ -21,7 +21,7 @@ SK V1과 메이드인레몬 운영자를 위한 독립 관리자 웹입니다. �
 - Tailwind CSS 4, shadcn/ui, Radix UI
 - TanStack Query, ky, React Hook Form, Zod
 - Vitest, ESLint
-- GSAP 기반 대시보드 모션
+- CVA 기반 공통 UI variant
 
 ## 시작하기
 

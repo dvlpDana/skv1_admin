@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@fontsource-variable/outfit": "^5.2.6",
-    "@gsap/react": "^2.1.2",
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -28,7 +27,6 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
-    "gsap": "^3.13.0",
     "jose": "^6.2.10",
     "ky": "^1.10.0",
     "lucide-react": "^0.544.0",
