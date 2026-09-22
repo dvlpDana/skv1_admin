@@ -73,7 +73,9 @@ describe("admin API contracts", () => {
     if (!result.ok) throw new Error("Expected contract match");
     expect(
       validateContractQuery(
-        new URLSearchParams("page=0&size=20&sort=createdAt,desc&status=PENDING"),
+        new URLSearchParams(
+          "page=0&size=20&sort=createdAt,desc&status=PENDING",
+        ),
         result.contract,
       ),
     ).toBe(true);
@@ -92,5 +94,123 @@ describe("admin API contracts", () => {
     expect(
       validateContractQuery(new URLSearchParams(query), result.contract),
     ).toBe(false);
+  });
+
+  it("matches banner metadata and creative routes", () => {
+    expect(matchAdminApiContract("banners/placements", "GET")).toMatchObject({
+      ok: true,
+    });
+    expect(
+      matchAdminApiContract("banners/12/creatives/ko/upload-url", "POST"),
+    ).toMatchObject({ ok: true });
+    expect(
+      matchAdminApiContract("banners/12/creatives/ja/confirm", "POST"),
+    ).toMatchObject({ ok: false, status: 404 });
+  });
+
+  it("validates banner list and upload queries", () => {
+    const list = matchAdminApiContract("banners", "GET");
+    const upload = matchAdminApiContract(
+      "banners/12/creatives/en/upload-url",
+      "POST",
+    );
+    if (!list.ok || !upload.ok) throw new Error("Expected contract match");
+
+    expect(
+      validateContractQuery(
+        new URLSearchParams(
+          "placement=BUYER_HOME_CAROUSEL&active=true&page=0&size=20&sort=id,desc",
+        ),
+        list.contract,
+      ),
+    ).toBe(true);
+    expect(
+      validateContractQuery(
+        new URLSearchParams("assetType=VIDEO"),
+        upload.contract,
+      ),
+    ).toBe(true);
+    expect(
+      validateContractQuery(
+        new URLSearchParams("assetType=DOCUMENT"),
+        upload.contract,
+      ),
+    ).toBe(false);
+  });
+
+  it("validates banner create and creative confirmation bodies", () => {
+    const create = matchAdminApiContract("banners", "POST");
+    const confirm = matchAdminApiContract(
+      "banners/3/creatives/ru/confirm",
+      "POST",
+    );
+    if (!create.ok || !confirm.ok) throw new Error("Expected contract match");
+
+    expect(
+      validateContractBody(
+        JSON.stringify({
+          placement: "WEB_HOME_WIDE_DESKTOP",
+          mediaType: "IMAGE",
+          labelType: null,
+          paidAd: false,
+          navigationParams: {},
+          externalUrl: "https://example.com/banner",
+          priority: 0,
+          active: false,
+          startAt: null,
+          endAt: null,
+        }),
+        create.contract,
+        "POST",
+      ),
+    ).toMatchObject({ ok: true });
+    expect(
+      validateContractBody(
+        JSON.stringify({
+          imageKey: "banner/image-key",
+          mediaKey: null,
+          title: "광고 제목",
+          altText: "차량 광고 배너",
+        }),
+        confirm.contract,
+        "POST",
+      ),
+    ).toMatchObject({ ok: true });
+  });
+
+  it("rejects unsafe banner values", () => {
+    const create = matchAdminApiContract("banners", "POST");
+    if (!create.ok) throw new Error("Expected contract match");
+
+    expect(
+      validateContractBody(
+        JSON.stringify({
+          placement: "WEB_HOME_WIDE_DESKTOP",
+          mediaType: "IMAGE",
+          paidAd: false,
+          navigationParams: {},
+          externalUrl: "http://example.com/banner",
+          priority: 0,
+          active: false,
+        }),
+        create.contract,
+        "POST",
+      ),
+    ).toEqual({ ok: false });
+    expect(
+      validateContractBody(
+        JSON.stringify({
+          placement: "WEB_HOME_WIDE_DESKTOP",
+          mediaType: "IMAGE",
+          paidAd: false,
+          navigationParams: {},
+          externalUrl: "not-a-url",
+          priority: 0,
+          active: false,
+        }),
+        create.contract,
+        "POST",
+      ),
+    ).toEqual({ ok: false });
   });
 });

@@ -28,6 +28,9 @@ const isAuditTarget = (value: string) =>
   ["FAQ", "NOTICE", "INQUIRY", "INQUIRY_CATEGORY", "ADMIN_ACCOUNT"].includes(
     value,
   );
+const isBoolean = (value: string) => ["true", "false"].includes(value);
+const isBannerValue = (value: string) => /^[A-Z][A-Z0-9_]{0,79}$/.test(value);
+const isBannerAssetType = (value: string) => ["IMAGE", "VIDEO"].includes(value);
 
 const paginationQuery = {
   page: isPage,
@@ -53,6 +56,70 @@ const faqPayloadSchema = z
   .strict();
 const noticePayloadSchema = z
   .object({ title: nonEmptyText, content: nonEmptyText })
+  .strict();
+const optionalBannerText = z
+  .string()
+  .trim()
+  .min(1)
+  .max(500)
+  .nullable()
+  .optional();
+const bannerEnum = z.string().regex(/^[A-Z][A-Z0-9_]{0,79}$/);
+const appVersion = z.string().regex(/^\d+\.\d+\.\d+$/);
+const dateTime = z.string().datetime({ offset: true });
+const navigationParams = z.record(
+  z.string().regex(/^[A-Za-z][A-Za-z0-9_]{0,79}$/),
+  z.string().trim().min(1).max(500),
+);
+const bannerFields = {
+  placement: bannerEnum,
+  mediaType: z.enum(["IMAGE", "VIDEO"]),
+  labelType: bannerEnum.nullable().optional(),
+  paidAd: z.boolean(),
+  userTypeTarget: bannerEnum.nullable().optional(),
+  platform: bannerEnum.nullable().optional(),
+  targetCountryCode: z
+    .string()
+    .regex(/^[A-Z]{2}$/)
+    .nullable()
+    .optional(),
+  minAppVersion: appVersion.nullable().optional(),
+  maxAppVersion: appVersion.nullable().optional(),
+  navigationKey: bannerEnum.nullable().optional(),
+  navigationParams: navigationParams.optional(),
+  externalUrl: z
+    .string()
+    .max(2048)
+    .refine((value) => {
+      try {
+        return new URL(value).protocol === "https:";
+      } catch {
+        return false;
+      }
+    })
+    .nullable()
+    .optional(),
+  priority: z.number().int().nonnegative(),
+  active: z.boolean(),
+  startAt: dateTime.nullable().optional(),
+  endAt: dateTime.nullable().optional(),
+};
+const bannerCreateSchema = z.object(bannerFields).strict();
+const bannerUpdateSchema = z.object(bannerFields).partial().strict();
+const bannerCreativeSchema = z
+  .object({
+    imageKey: nonEmptyText,
+    mediaKey: optionalBannerText,
+    title: optionalBannerText,
+    description: optionalBannerText,
+    titleLine2: optionalBannerText,
+    brand: optionalBannerText,
+    modelName: optionalBannerText,
+    priceMin: z.number().int().nonnegative().nullable().optional(),
+    priceMax: z.number().int().nonnegative().nullable().optional(),
+    disclaimer: optionalBannerText,
+    altText: nonEmptyText.max(500),
+  })
   .strict();
 
 const contracts: readonly AdminApiContract[] = [
@@ -241,6 +308,49 @@ const contracts: readonly AdminApiContract[] = [
     methods: ["PATCH"],
     bodyMethods: ["PATCH"],
     bodySchemas: { PATCH: z.object({ active: z.boolean() }).strict() },
+  },
+  {
+    id: "banners",
+    pattern: /^banners$/,
+    methods: ["GET", "POST"],
+    query: { ...paginationQuery, placement: isBannerValue, active: isBoolean },
+    bodyMethods: ["POST"],
+    bodySchemas: { POST: bannerCreateSchema },
+  },
+  {
+    id: "banner-placements",
+    pattern: /^banners\/placements$/,
+    methods: ["GET"],
+  },
+  {
+    id: "banner-navigation-keys",
+    pattern: /^banners\/navigation-keys$/,
+    methods: ["GET"],
+  },
+  {
+    id: "banner-detail",
+    pattern: /^banners\/[1-9]\d*$/,
+    methods: ["GET", "PUT", "DELETE"],
+    bodyMethods: ["PUT"],
+    bodySchemas: { PUT: bannerUpdateSchema },
+  },
+  {
+    id: "banner-creative-upload-url",
+    pattern: /^banners\/[1-9]\d*\/creatives\/(ko|en|ru)\/upload-url$/,
+    methods: ["POST"],
+    query: { assetType: isBannerAssetType },
+  },
+  {
+    id: "banner-creative-confirm",
+    pattern: /^banners\/[1-9]\d*\/creatives\/(ko|en|ru)\/confirm$/,
+    methods: ["POST"],
+    bodyMethods: ["POST"],
+    bodySchemas: { POST: bannerCreativeSchema },
+  },
+  {
+    id: "banner-creative-detail",
+    pattern: /^banners\/[1-9]\d*\/creatives\/(ko|en|ru)$/,
+    methods: ["DELETE"],
   },
   {
     id: "audit-logs",

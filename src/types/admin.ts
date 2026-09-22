@@ -2,6 +2,9 @@ export type OrgType = "SKV1" | "MADEINLEMON";
 export type AuthMethod = "PASSWORD" | "SOCIAL";
 export type InquiryStatus = "PENDING" | "ANSWERED";
 export type FaqCategory = "MEMBER_INFO" | "MY_CAR" | "CHAT_PURCHASE" | "SELLER";
+export type BannerLanguage = "ko" | "en" | "ru";
+export type BannerMediaType = "IMAGE" | "VIDEO";
+export type BannerAssetType = "IMAGE" | "VIDEO";
 
 export interface AdminAccount {
   id: number;
@@ -82,6 +85,72 @@ export interface AuditLog {
   createdAt: string;
 }
 
+export interface BannerListItem {
+  id: number;
+  placement: string;
+  mediaType: BannerMediaType;
+  labelType: string | null;
+  paidAd: boolean;
+  active: boolean;
+  priority: number;
+  startAt: string | null;
+  endAt: string | null;
+  creativeLangs: BannerLanguage[];
+  createdAt: string;
+}
+
+export interface BannerCreative {
+  lang: BannerLanguage;
+  imageUrl: string | null;
+  mediaUrl: string | null;
+  title: string | null;
+  description: string | null;
+  titleLine2: string | null;
+  brand: string | null;
+  modelName: string | null;
+  priceMin: number | null;
+  priceMax: number | null;
+  disclaimer: string | null;
+  altText: string;
+}
+
+export interface Banner extends Omit<BannerListItem, "creativeLangs"> {
+  renderType: string;
+  userTypeTarget: string | null;
+  platform: string | null;
+  targetCountryCode: string | null;
+  minAppVersion: string | null;
+  maxAppVersion: string | null;
+  navigationKey: string | null;
+  navigationParams: Record<string, string>;
+  externalUrl: string | null;
+  creatives: BannerCreative[];
+  updatedAt: string;
+}
+
+export interface BannerPlacement {
+  placement: string;
+  clientType: string;
+  renderType: string;
+  maxItems: number;
+  slotInterval: number | null;
+  maxInsertions: number | null;
+  allowedLabelTypes: string[];
+  allowedMediaTypes: BannerMediaType[];
+  aspectWidth: number;
+  aspectHeight: number;
+}
+
+export interface BannerNavigationKey {
+  key: string;
+  requiredParam: string | null;
+}
+
+export interface BannerUploadUrl {
+  presignedUrl: string;
+  key: string;
+}
+
 export interface PageResponse<T> {
   content: T[];
   number?: number;
@@ -113,3 +182,5 @@ export const FAQ_CATEGORY_LABELS: Record<FaqCategory, string> = {
 };
 
 export const FAQ_CATEGORIES = Object.keys(FAQ_CATEGORY_LABELS) as FaqCategory[];
+
+export const BANNER_LANGUAGES: BannerLanguage[] = ["ko", "en", "ru"];

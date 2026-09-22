@@ -2,9 +2,11 @@ import { NextRequest } from "next/server";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { ADMIN_SESSION_COOKIE } from "@/lib/auth/constants";
 import { encryptAdminSession, type AdminSession } from "@/lib/auth/session";
-import { GET, PUT } from "./route";
+import { GET, POST, PUT } from "./route";
 
-const routeContext = (path: string[]) => ({ params: Promise.resolve({ path }) });
+const routeContext = (path: string[]) => ({
+  params: Promise.resolve({ path }),
+});
 
 function session(overrides: Partial<AdminSession> = {}): AdminSession {
   return {
@@ -130,5 +132,34 @@ describe("admin API proxy", () => {
 
     expect(response.status).toBe(403);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("forwards a body-less banner upload URL request", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json({
+        presignedUrl: "https://uploads.example.com/banner",
+        key: "banners/image-key",
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await POST(
+      await request("banners/1/creatives/ko/upload-url?assetType=IMAGE", {
+        method: "POST",
+        session: session(),
+        origin: "http://localhost:3001",
+      }),
+      routeContext(["banners", "1", "creatives", "ko", "upload-url"]),
+    );
+
+    expect(response.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(String(fetchMock.mock.calls[0][0])).toContain(
+      "/admin/banners/1/creatives/ko/upload-url?assetType=IMAGE",
+    );
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({
+      method: "POST",
+      body: undefined,
+    });
   });
 });
