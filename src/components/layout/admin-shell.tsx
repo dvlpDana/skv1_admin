@@ -6,6 +6,7 @@ import {
   ClipboardDocumentListIcon,
   Cog6ToothIcon,
   DocumentTextIcon,
+  PhotoIcon,
   QuestionMarkCircleIcon,
   Squares2X2Icon,
   UserGroupIcon,
@@ -58,6 +59,11 @@ const navItems: NavItem[] = [
     icon: DocumentTextIcon,
   },
   {
+    href: "/banners",
+    label: "광고 배너",
+    icon: PhotoIcon,
+  },
+  {
     href: "/inquiries",
     label: "1:1 문의",
     icon: ChatBubbleLeftRightIcon,
@@ -97,6 +103,10 @@ const shellHeaders: Record<string, ShellHeaderContent> = {
   "/notices": {
     title: "공지사항",
     description: "고객에게 공개할 공지사항을 작성하고 관리합니다.",
+  },
+  "/banners": {
+    title: "광고 배너",
+    description: "앱과 웹에 노출되는 광고 배너와 언어별 소재를 관리합니다.",
   },
   "/inquiries": {
     title: "1:1 문의",
