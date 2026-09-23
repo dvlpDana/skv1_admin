@@ -47,7 +47,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { adminApi, uploadToPresignedUrl } from "@/lib/api/client";
 import {
   compareAppVersions,
+  getAspectRatioError,
   getBannerFileError,
+  readImageSize,
   RENDER_FIELDS,
 } from "@/lib/banner-rules";
 import { formatDateTime } from "@/lib/utils";
@@ -308,6 +310,9 @@ export function BannerEditorDialog({
     () =>
       placementsQuery.data?.find((item) => item.placement === form.placement),
     [form.placement, placementsQuery.data],
+  );
+  const savedPlacement = placementsQuery.data?.find(
+    (item) => item.placement === detailQuery.data?.placement,
   );
   const currentNavigation = navigationQuery.data?.find(
     (item) => item.key === form.navigationKey,
@@ -583,6 +588,15 @@ export function BannerEditorDialog({
       const error = validateCreative();
       if (error) throw new Error(error);
       if (!imageFile) throw new Error("이미지 파일을 선택해 주세요.");
+      if (savedPlacement) {
+        const aspectError = getAspectRatioError(
+          await readImageSize(imageFile),
+          savedPlacement.aspectWidth,
+          savedPlacement.aspectHeight,
+        );
+        if (aspectError) throw new Error(aspectError);
+      }
+
       setUploadStage("이미지 업로드 URL을 발급하고 있습니다.");
       const imageUpload = await adminApi.post<BannerUploadUrl>(
         `banners/${resolvedId}/creatives/${creativeLanguage}/upload-url?assetType=IMAGE`,

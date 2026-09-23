@@ -72,3 +72,26 @@ export const RENDER_FIELDS: Record<string, RenderFieldRule> = {
     vehicle: true,
   },
 };
+
+const ASPECT_TOLERANCE = 0.01;
+
+export function getAspectRatioError(
+  size: { width: number; height: number },
+  aspectWidth: number,
+  aspectHeight: number,
+) {
+  if (!size.width || !size.height) return "이미지 크기를 확인할 수 없습니다.";
+  const expected = aspectWidth / aspectHeight;
+  const actual = size.width / size.height;
+  if (Math.abs(actual - expected) / expected <= ASPECT_TOLERANCE) return null;
+  return `이 지면은 ${aspectWidth}:${aspectHeight} 비율이 필요합니다. 선택한 이미지는 ${size.width}x${size.height} 입니다.`;
+}
+
+export async function readImageSize(file: Blob) {
+  const bitmap = await createImageBitmap(file);
+  try {
+    return { width: bitmap.width, height: bitmap.height };
+  } finally {
+    bitmap.close();
+  }
+}

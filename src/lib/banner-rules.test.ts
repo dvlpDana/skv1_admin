@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   compareAppVersions,
+  getAspectRatioError,
   getBannerFileError,
   RENDER_FIELDS,
 } from "./banner-rules";
@@ -40,5 +41,17 @@ describe("banner rules", () => {
     expect(
       Object.values(RENDER_FIELDS).filter((rule) => rule.vehicle),
     ).toHaveLength(1);
+  });
+
+  it("rejects creatives that do not match the placement aspect ratio", () => {
+    expect(
+      getAspectRatioError({ width: 512, height: 512 }, 1125, 348),
+    ).toContain("1125:348");
+    expect(
+      getAspectRatioError({ width: 1005, height: 420 }, 1005, 420),
+    ).toBeNull();
+    expect(
+      getAspectRatioError({ width: 2010, height: 840 }, 1005, 420),
+    ).toBeNull();
   });
 });
