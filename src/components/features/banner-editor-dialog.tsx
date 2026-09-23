@@ -45,7 +45,13 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { adminApi, uploadToPresignedUrl } from "@/lib/api/client";
-import { compareAppVersions, getBannerFileError } from "@/lib/banner-rules";
+import {
+  compareAppVersions,
+  getAspectRatioWarning,
+  getBannerFileError,
+  readImageSize,
+  RENDER_FIELDS,
+} from "@/lib/banner-rules";
 import { formatDateTime } from "@/lib/utils";
 import type {
   Banner,
@@ -236,6 +242,10 @@ export function BannerEditorDialog({
     useState<CreativeForm>(EMPTY_CREATIVE);
   const [creativeInitialValue, setCreativeInitialValue] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageSize, setImageSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
   const [uploadStage, setUploadStage] = useState<string | null>(null);
@@ -305,6 +315,23 @@ export function BannerEditorDialog({
       placementsQuery.data?.find((item) => item.placement === form.placement),
     [form.placement, placementsQuery.data],
   );
+  const savedPlacement = placementsQuery.data?.find(
+    (item) => item.placement === detailQuery.data?.placement,
+  );
+
+  useEffect(() => {
+    if (!imageFile) {
+      setImageSize(null);
+      return;
+    }
+    let active = true;
+    readImageSize(imageFile)
+      .then((size) => active && setImageSize(size))
+      .catch(() => active && setImageSize(null));
+    return () => {
+      active = false;
+    };
+  }, [imageFile]);
   const currentNavigation = navigationQuery.data?.find(
     (item) => item.key === form.navigationKey,
   );
@@ -477,6 +504,69 @@ export function BannerEditorDialog({
     };
   }
 
+  function validateCreative() {
+    const detail = detailQuery.data;
+    if (!detail) return "배너 정보를 먼저 저장해 주세요.";
+    const rule = RENDER_FIELDS[detail.renderType];
+    if (!rule) return `지원하지 않는 렌더 형식입니다: ${detail.renderType}`;
+    if (!imageFile) return "이미지 파일을 선택해 주세요.";
+    const imageError = getBannerFileError(imageFile, "IMAGE");
+    if (imageError) return imageError;
+    if (detail.mediaType === "VIDEO" && !videoFile) {
+      return "영상 배너는 MP4 영상 파일이 필요합니다.";
+    }
+    if (videoFile) {
+      const videoError = getBannerFileError(videoFile, "VIDEO");
+      if (videoError) return videoError;
+    }
+    if (!creativeForm.altText.trim()) return "대체 텍스트를 입력해 주세요.";
+    if (rule.title === "required" && !creativeForm.title.trim()) {
+      return "이 지면은 소재 제목이 필요합니다.";
+    }
+    if (!rule.vehicle) return null;
+
+    const missing = (
+      [
+        ["brand", "브랜드"],
+        ["modelName", "모델명"],
+        ["disclaimer", "고지 문구"],
+        ["priceMin", "최소 가격"],
+        ["priceMax", "최대 가격"],
+      ] as const
+    ).find(([field]) => !creativeForm[field].trim());
+    if (missing) return `${missing[1]}을(를) 입력해 주세요.`;
+    const priceMin = Number(creativeForm.priceMin);
+    const priceMax = Number(creativeForm.priceMax);
+    if (
+      [priceMin, priceMax].some(
+        (price) => !Number.isInteger(price) || price < 0,
+      )
+    ) {
+      return "가격은 0 이상의 정수로 입력해 주세요.";
+    }
+    if (priceMin > priceMax) {
+      return "최소 가격은 최대 가격보다 클 수 없습니다.";
+    }
+    return null;
+  }
+
+  /** 스펙 3항 매핑표에 없는 필드는 항상 null로 보낸다. */
+  function creativeFieldPayload() {
+    const rule = RENDER_FIELDS[detailQuery.data?.renderType ?? ""];
+    const value = (field: keyof CreativeForm, allowed: boolean) =>
+      allowed ? optional(creativeForm[field]) : null;
+    return {
+      title: value("title", rule?.title !== "none"),
+      description: value("description", rule?.description !== "none"),
+      titleLine2: value("titleLine2", rule?.titleLine2 !== "none"),
+      brand: value("brand", Boolean(rule?.vehicle)),
+      modelName: value("modelName", Boolean(rule?.vehicle)),
+      disclaimer: value("disclaimer", Boolean(rule?.vehicle)),
+      priceMin: rule?.vehicle ? Number(creativeForm.priceMin) : null,
+      priceMax: rule?.vehicle ? Number(creativeForm.priceMax) : null,
+    };
+  }
+
   const saveMutation = useMutation({
     mutationFn: () => {
       const error = validateMetadata();
@@ -513,46 +603,9 @@ export function BannerEditorDialog({
       if (!resolvedId || !creativeLanguage || !detailQuery.data) {
         throw new Error("배너 정보를 먼저 저장해 주세요.");
       }
+      const error = validateCreative();
+      if (error) throw new Error(error);
       if (!imageFile) throw new Error("이미지 파일을 선택해 주세요.");
-      const imageError = getBannerFileError(imageFile, "IMAGE");
-      if (imageError) throw new Error(imageError);
-      if (detailQuery.data.mediaType === "VIDEO" && !videoFile) {
-        throw new Error("영상 배너는 MP4 영상 파일이 필요합니다.");
-      }
-      if (videoFile) {
-        const videoError = getBannerFileError(videoFile, "VIDEO");
-        if (videoError) throw new Error(videoError);
-      }
-      if (!creativeForm.altText.trim()) {
-        throw new Error("대체 텍스트를 입력해 주세요.");
-      }
-      const renderType = detailQuery.data.renderType;
-      if (!["HERO_IMAGE", "FEED_ROW", "GRID_CARD"].includes(renderType)) {
-        throw new Error(`지원하지 않는 렌더 형식입니다: ${renderType}`);
-      }
-      if (
-        ["FEED_ROW", "GRID_CARD"].includes(renderType) &&
-        !creativeForm.title.trim()
-      ) {
-        throw new Error("이 지면은 소재 제목이 필요합니다.");
-      }
-      const priceMin = creativeForm.priceMin
-        ? Number(creativeForm.priceMin)
-        : null;
-      const priceMax = creativeForm.priceMax
-        ? Number(creativeForm.priceMax)
-        : null;
-      if (
-        [priceMin, priceMax].some(
-          (price) => price !== null && (!Number.isInteger(price) || price < 0),
-        )
-      ) {
-        throw new Error("가격은 0 이상의 정수로 입력해 주세요.");
-      }
-      if (priceMin !== null && priceMax !== null && priceMin > priceMax) {
-        throw new Error("최소 가격은 최대 가격보다 클 수 없습니다.");
-      }
-
       setUploadStage("이미지 업로드 URL을 발급하고 있습니다.");
       const imageUpload = await adminApi.post<BannerUploadUrl>(
         `banners/${resolvedId}/creatives/${creativeLanguage}/upload-url?assetType=IMAGE`,
@@ -577,18 +630,7 @@ export function BannerEditorDialog({
         {
           imageKey: imageUpload.key,
           mediaKey,
-          title:
-            renderType === "HERO_IMAGE" ? null : optional(creativeForm.title),
-          description:
-            renderType === "HERO_IMAGE"
-              ? null
-              : optional(creativeForm.description),
-          titleLine2: optional(creativeForm.titleLine2),
-          brand: optional(creativeForm.brand),
-          modelName: optional(creativeForm.modelName),
-          priceMin,
-          priceMax,
-          disclaimer: optional(creativeForm.disclaimer),
+          ...creativeFieldPayload(),
           altText: creativeForm.altText.trim(),
         },
       );
@@ -705,9 +747,16 @@ export function BannerEditorDialog({
   const existingCreative = detail?.creatives.find(
     (item) => item.lang === creativeLanguage,
   );
-  const requiredTitle = detail
-    ? ["FEED_ROW", "GRID_CARD"].includes(detail.renderType)
-    : false;
+  const renderRule = detail ? RENDER_FIELDS[detail.renderType] : undefined;
+  const aspectWarning =
+    imageSize && savedPlacement
+      ? getAspectRatioWarning(
+          imageSize,
+          savedPlacement.aspectWidth,
+          savedPlacement.aspectHeight,
+        )
+      : null;
+  const creativeIssue = creativeLanguage ? validateCreative() : null;
 
   return (
     <>
@@ -1228,6 +1277,11 @@ export function BannerEditorDialog({
                                   undefined)
                                 : undefined}
                             </FieldError>
+                            {aspectWarning && (
+                              <p className="text-xs text-warning-foreground">
+                                {aspectWarning}
+                              </p>
+                            )}
                           </div>
                           {detail.mediaType === "VIDEO" && (
                             <div className="space-y-2">
@@ -1276,11 +1330,14 @@ export function BannerEditorDialog({
                           />
                         </div>
 
-                        {detail.renderType !== "HERO_IMAGE" && (
+                        {renderRule && renderRule.title !== "none" && (
                           <div className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-2">
                               <Label htmlFor="banner-creative-title">
-                                제목{requiredTitle ? " (필수)" : ""}
+                                제목
+                                {renderRule.title === "required"
+                                  ? " (필수)"
+                                  : ""}
                               </Label>
                               <Input
                                 id="banner-creative-title"
@@ -1291,101 +1348,116 @@ export function BannerEditorDialog({
                                 maxLength={500}
                               />
                             </div>
+                            {renderRule.titleLine2 !== "none" && (
+                              <div className="space-y-2">
+                                <Label htmlFor="banner-title-line-2">
+                                  두 번째 제목
+                                </Label>
+                                <Input
+                                  id="banner-title-line-2"
+                                  value={creativeForm.titleLine2}
+                                  onChange={(event) =>
+                                    updateCreative(
+                                      "titleLine2",
+                                      event.target.value,
+                                    )
+                                  }
+                                  maxLength={500}
+                                />
+                              </div>
+                            )}
+                            {renderRule.description !== "none" && (
+                              <div className="space-y-2 md:col-span-2">
+                                <Label htmlFor="banner-description">설명</Label>
+                                <Textarea
+                                  id="banner-description"
+                                  value={creativeForm.description}
+                                  onChange={(event) =>
+                                    updateCreative(
+                                      "description",
+                                      event.target.value,
+                                    )
+                                  }
+                                  maxLength={500}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {renderRule?.vehicle && (
+                          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                             <div className="space-y-2">
-                              <Label htmlFor="banner-title-line-2">
-                                두 번째 제목
-                              </Label>
+                              <Label htmlFor="banner-brand">브랜드</Label>
                               <Input
-                                id="banner-title-line-2"
-                                value={creativeForm.titleLine2}
+                                id="banner-brand"
+                                value={creativeForm.brand}
+                                onChange={(event) =>
+                                  updateCreative("brand", event.target.value)
+                                }
+                                maxLength={500}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="banner-model">모델명</Label>
+                              <Input
+                                id="banner-model"
+                                value={creativeForm.modelName}
                                 onChange={(event) =>
                                   updateCreative(
-                                    "titleLine2",
+                                    "modelName",
                                     event.target.value,
                                   )
                                 }
                                 maxLength={500}
                               />
                             </div>
-                            <div className="space-y-2 md:col-span-2">
-                              <Label htmlFor="banner-description">설명</Label>
-                              <Textarea
-                                id="banner-description"
-                                value={creativeForm.description}
+                            <div className="space-y-2">
+                              <Label htmlFor="banner-price-min">
+                                최소 가격(원)
+                              </Label>
+                              <Input
+                                id="banner-price-min"
+                                type="number"
+                                min={0}
+                                step={1}
+                                value={creativeForm.priceMin}
                                 onChange={(event) =>
-                                  updateCreative(
-                                    "description",
-                                    event.target.value,
-                                  )
+                                  updateCreative("priceMin", event.target.value)
                                 }
-                                maxLength={500}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="banner-price-max">
+                                최대 가격(원)
+                              </Label>
+                              <Input
+                                id="banner-price-max"
+                                type="number"
+                                min={0}
+                                step={1}
+                                value={creativeForm.priceMax}
+                                onChange={(event) =>
+                                  updateCreative("priceMax", event.target.value)
+                                }
                               />
                             </div>
                           </div>
                         )}
 
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        {renderRule?.vehicle && (
                           <div className="space-y-2">
-                            <Label htmlFor="banner-brand">브랜드</Label>
-                            <Input
-                              id="banner-brand"
-                              value={creativeForm.brand}
+                            <Label htmlFor="banner-disclaimer">고지 문구</Label>
+                            <Textarea
+                              id="banner-disclaimer"
+                              value={creativeForm.disclaimer}
                               onChange={(event) =>
-                                updateCreative("brand", event.target.value)
+                                updateCreative("disclaimer", event.target.value)
                               }
                               maxLength={500}
                             />
                           </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="banner-model">모델명</Label>
-                            <Input
-                              id="banner-model"
-                              value={creativeForm.modelName}
-                              onChange={(event) =>
-                                updateCreative("modelName", event.target.value)
-                              }
-                              maxLength={500}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="banner-price-min">최소 가격</Label>
-                            <Input
-                              id="banner-price-min"
-                              type="number"
-                              min={0}
-                              step={1}
-                              value={creativeForm.priceMin}
-                              onChange={(event) =>
-                                updateCreative("priceMin", event.target.value)
-                              }
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="banner-price-max">최대 가격</Label>
-                            <Input
-                              id="banner-price-max"
-                              type="number"
-                              min={0}
-                              step={1}
-                              value={creativeForm.priceMax}
-                              onChange={(event) =>
-                                updateCreative("priceMax", event.target.value)
-                              }
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="banner-disclaimer">고지 문구</Label>
-                          <Textarea
-                            id="banner-disclaimer"
-                            value={creativeForm.disclaimer}
-                            onChange={(event) =>
-                              updateCreative("disclaimer", event.target.value)
-                            }
-                            maxLength={500}
-                          />
-                        </div>
+                        )}
 
                         <div className="flex flex-col gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
                           <div className="space-y-2">
@@ -1394,6 +1466,7 @@ export function BannerEditorDialog({
                               aria-live="polite"
                             >
                               {uploadStage ??
+                                creativeIssue ??
                                 "저장하면 파일 업로드와 서버 검증을 순서대로 진행합니다."}
                             </p>
                             {creativeError && (
@@ -1407,7 +1480,9 @@ export function BannerEditorDialog({
                           </div>
                           <Button
                             onClick={() => uploadMutation.mutate()}
-                            disabled={uploadMutation.isPending}
+                            disabled={
+                              uploadMutation.isPending || creativeIssue !== null
+                            }
                           >
                             {uploadMutation.isPending ? (
                               <LoaderCircle className="animate-spin" />

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { compareAppVersions, getBannerFileError } from "./banner-rules";
+import {
+  compareAppVersions,
+  getAspectRatioWarning,
+  getBannerFileError,
+  RENDER_FIELDS,
+} from "./banner-rules";
 
 describe("banner rules", () => {
   it("compares semantic app versions by numeric segment", () => {
@@ -19,6 +24,34 @@ describe("banner rules", () => {
         { name: "banner.mp4", type: "video/mp4", size: 5 * 1024 * 1024 },
         "VIDEO",
       ),
+    ).toBeNull();
+  });
+
+  it("maps every renderType to the documented creative fields", () => {
+    expect(RENDER_FIELDS.HERO_IMAGE).toEqual({
+      title: "none",
+      description: "none",
+      titleLine2: "none",
+      vehicle: false,
+    });
+    expect(RENDER_FIELDS.FEED_ROW).toEqual(RENDER_FIELDS.GRID_CARD);
+    expect(RENDER_FIELDS.FEED_ROW.title).toBe("required");
+    expect(RENDER_FIELDS.MAIN_BANNER.titleLine2).toBe("optional");
+    expect(RENDER_FIELDS.VEHICLE_VIDEO_AD.vehicle).toBe(true);
+    expect(
+      Object.values(RENDER_FIELDS).filter((rule) => rule.vehicle),
+    ).toHaveLength(1);
+  });
+
+  it("warns when a creative does not match the placement aspect ratio", () => {
+    expect(
+      getAspectRatioWarning({ width: 512, height: 512 }, 1125, 348),
+    ).toContain("1125:348");
+    expect(
+      getAspectRatioWarning({ width: 1005, height: 420 }, 1005, 420),
+    ).toBeNull();
+    expect(
+      getAspectRatioWarning({ width: 2010, height: 840 }, 1005, 420),
     ).toBeNull();
   });
 });
