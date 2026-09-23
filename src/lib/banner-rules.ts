@@ -28,3 +28,47 @@ export function getBannerFileError(
   }
   return null;
 }
+
+type FieldRule = "required" | "optional" | "none";
+
+export type RenderFieldRule = {
+  title: FieldRule;
+  description: FieldRule;
+  titleLine2: FieldRule;
+  /** brand/modelName/priceMin/priceMax/disclaimer 묶음. 필수이거나 전부 null. */
+  vehicle: boolean;
+};
+
+/** 광고 배너 조회 API 3항 "renderType별 필드 매핑" 표와 1:1로 대응한다. */
+export const RENDER_FIELDS: Record<string, RenderFieldRule> = {
+  HERO_IMAGE: {
+    title: "none",
+    description: "none",
+    titleLine2: "none",
+    vehicle: false,
+  },
+  FEED_ROW: {
+    title: "required",
+    description: "optional",
+    titleLine2: "none",
+    vehicle: false,
+  },
+  GRID_CARD: {
+    title: "required",
+    description: "optional",
+    titleLine2: "none",
+    vehicle: false,
+  },
+  MAIN_BANNER: {
+    title: "required",
+    description: "optional",
+    titleLine2: "optional",
+    vehicle: false,
+  },
+  VEHICLE_VIDEO_AD: {
+    title: "none",
+    description: "none",
+    titleLine2: "none",
+    vehicle: true,
+  },
+};
