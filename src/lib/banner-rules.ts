@@ -75,7 +75,7 @@ export const RENDER_FIELDS: Record<string, RenderFieldRule> = {
 
 const ASPECT_TOLERANCE = 0.01;
 
-export function getAspectRatioError(
+export function getAspectRatioWarning(
   size: { width: number; height: number },
   aspectWidth: number,
   aspectHeight: number,
@@ -84,7 +84,7 @@ export function getAspectRatioError(
   const expected = aspectWidth / aspectHeight;
   const actual = size.width / size.height;
   if (Math.abs(actual - expected) / expected <= ASPECT_TOLERANCE) return null;
-  return `이 지면은 ${aspectWidth}:${aspectHeight} 비율이 필요합니다. 선택한 이미지는 ${size.width}x${size.height} 입니다.`;
+  return `권장 비율 ${aspectWidth}:${aspectHeight}와 다릅니다. 선택한 이미지는 ${size.width}x${size.height} 입니다. 그대로 등록하면 지면에서 잘리거나 여백이 생길 수 있습니다.`;
 }
 
 export async function readImageSize(file: Blob) {

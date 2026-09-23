@@ -47,7 +47,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { adminApi, uploadToPresignedUrl } from "@/lib/api/client";
 import {
   compareAppVersions,
-  getAspectRatioError,
+  getAspectRatioWarning,
   getBannerFileError,
   readImageSize,
   RENDER_FIELDS,
@@ -242,6 +242,10 @@ export function BannerEditorDialog({
     useState<CreativeForm>(EMPTY_CREATIVE);
   const [creativeInitialValue, setCreativeInitialValue] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageSize, setImageSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
   const [uploadStage, setUploadStage] = useState<string | null>(null);
@@ -314,6 +318,20 @@ export function BannerEditorDialog({
   const savedPlacement = placementsQuery.data?.find(
     (item) => item.placement === detailQuery.data?.placement,
   );
+
+  useEffect(() => {
+    if (!imageFile) {
+      setImageSize(null);
+      return;
+    }
+    let active = true;
+    readImageSize(imageFile)
+      .then((size) => active && setImageSize(size))
+      .catch(() => active && setImageSize(null));
+    return () => {
+      active = false;
+    };
+  }, [imageFile]);
   const currentNavigation = navigationQuery.data?.find(
     (item) => item.key === form.navigationKey,
   );
@@ -588,15 +606,6 @@ export function BannerEditorDialog({
       const error = validateCreative();
       if (error) throw new Error(error);
       if (!imageFile) throw new Error("이미지 파일을 선택해 주세요.");
-      if (savedPlacement) {
-        const aspectError = getAspectRatioError(
-          await readImageSize(imageFile),
-          savedPlacement.aspectWidth,
-          savedPlacement.aspectHeight,
-        );
-        if (aspectError) throw new Error(aspectError);
-      }
-
       setUploadStage("이미지 업로드 URL을 발급하고 있습니다.");
       const imageUpload = await adminApi.post<BannerUploadUrl>(
         `banners/${resolvedId}/creatives/${creativeLanguage}/upload-url?assetType=IMAGE`,
@@ -739,6 +748,14 @@ export function BannerEditorDialog({
     (item) => item.lang === creativeLanguage,
   );
   const renderRule = detail ? RENDER_FIELDS[detail.renderType] : undefined;
+  const aspectWarning =
+    imageSize && savedPlacement
+      ? getAspectRatioWarning(
+          imageSize,
+          savedPlacement.aspectWidth,
+          savedPlacement.aspectHeight,
+        )
+      : null;
   const creativeIssue = creativeLanguage ? validateCreative() : null;
 
   return (
@@ -1260,6 +1277,11 @@ export function BannerEditorDialog({
                                   undefined)
                                 : undefined}
                             </FieldError>
+                            {aspectWarning && (
+                              <p className="text-xs text-warning-foreground">
+                                {aspectWarning}
+                              </p>
+                            )}
                           </div>
                           {detail.mediaType === "VIDEO" && (
                             <div className="space-y-2">
